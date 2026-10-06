@@ -1,14 +1,14 @@
-## Vad gör ändringen?
+## What does the change do?
 
 
-## Varför?
+## Why?
 
 
-## Hur har du testat?
-- [] mvn test går igenom lokalt
-- [] testat manuellt (curl/postman)
+## How was it tested?
+- [] local mvn tests
+- [] manually tested (curl/postman/requests.http)
 
 
-## Checklista
-- [] inga hemligheter i koden
-- [] inget känsligt loggas
+## Ready when:
+- [] no secrets in the code
+- [] no sensitive information logged
