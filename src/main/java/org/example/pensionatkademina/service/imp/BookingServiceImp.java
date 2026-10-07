@@ -1,6 +1,7 @@
 package org.example.pensionatkademina.service.imp;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.pensionatkademina.client.CustomerClient;
 import org.example.pensionatkademina.dto.BookingDto;
 import org.example.pensionatkademina.dto.RoomDetailedDto;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BookingServiceImp implements BookingService {
@@ -42,26 +44,44 @@ public class BookingServiceImp implements BookingService {
 
     @Override
     public BookingDto createBooking(BookingDto bookingDto) {
-        Booking booking = new Booking();
+        log.info("Creating new booking for customerId={}, roomId={}, checkIn={}, checkOut={}",
+            bookingDto.getCustomerId(), bookingDto.getRoomId(),
+            bookingDto.getCheckInDate(), bookingDto.getCheckOutDate());
 
-        return saveBooking(booking, bookingDto, null);
+        Booking booking = new Booking();
+        BookingDto result = saveBooking(booking, bookingDto, null);
+
+        log.info("Booking created successfully with ID={}", result.getId());
+        return result;
     }
 
     @Override
     public BookingDto updateBooking(Long id, BookingDto bookingDto) {
-        Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Booking not found!"));
+        log.info("Updating booking ID={} with customerId={}, roomId={}",
+            id, bookingDto.getCustomerId(), bookingDto.getRoomId());
 
-        return saveBooking(booking, bookingDto, id);
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Booking not found for update: ID={}", id);
+                    return new IllegalArgumentException("Booking not found!");
+                });
+
+        BookingDto result = saveBooking(booking, bookingDto, id);
+        log.info("Booking ID={} updated successfully", id);
+        return result;
     }
 
     @Override
     public void deleteBooking(Long id) {
+        log.info("Deleting booking ID={}", id);
+
         if (!bookingRepository.existsById(id)) {
+            log.warn("Attempted to delete non-existent booking: ID={}", id);
             throw new IllegalArgumentException("Booking does not exist!");
         }
 
         bookingRepository.deleteById(id);
+        log.info("Booking ID={} deleted successfully", id);
     }
 
     @Override
@@ -74,15 +94,21 @@ public class BookingServiceImp implements BookingService {
                                                       LocalDate checkOutDate,
                                                       int numberOfGuests) {
 
+        log.info("Searching for available rooms: checkIn={}, checkOut={}, guests={}",
+            checkInDate, checkOutDate, numberOfGuests);
+
         if (!checkOutDate.isAfter(checkInDate)) {
+            log.warn("Invalid search parameters: checkOut must be after checkIn. checkIn={}, checkOut={}",
+                checkInDate, checkOutDate);
             throw new IllegalArgumentException("Check out must occur after check in!");
         }
 
         if (numberOfGuests < 1) {
+            log.warn("Invalid guest count: {}", numberOfGuests);
             throw new IllegalArgumentException("Minimum amount of guests is 1!");
         }
 
-        return roomRepository.findAll()
+        List<RoomDetailedDto> availableRooms = roomRepository.findAll()
                 .stream()
                 .filter(room -> numberOfGuests <= getMaxGuests(room))
                 .filter(room -> !bookingRepository.roomIsBooked(
@@ -93,6 +119,9 @@ public class BookingServiceImp implements BookingService {
                 ))
                 .map(this::toRoomDto)
                 .toList();
+
+        log.info("Found {} available rooms for the search criteria", availableRooms.size());
+        return availableRooms;
     }
 
     private BookingDto saveBooking(Booking booking,
@@ -103,17 +132,25 @@ public class BookingServiceImp implements BookingService {
                 //.orElseThrow(() -> new IllegalArgumentException("Customer does not exist!"));
 
         Room room = roomRepository.findById(bookingDto.getRoomId())
-                .orElseThrow(() -> new IllegalArgumentException("Room does not exist!"));
+                .orElseThrow(() -> {
+                    log.warn("Room not found for booking: roomId={}", bookingDto.getRoomId());
+                    return new IllegalArgumentException("Room does not exist!");
+                });
 
         if (!bookingDto.getCheckOutDate().isAfter(bookingDto.getCheckInDate())) {
+            log.warn("Invalid booking dates: checkIn={}, checkOut={}",
+                bookingDto.getCheckInDate(), bookingDto.getCheckOutDate());
             throw new IllegalArgumentException("Check out must occur after check in!");
         }
 
         if (bookingDto.getNumberOfGuests() < 1) {
+            log.warn("Invalid number of guests: {}", bookingDto.getNumberOfGuests());
             throw new IllegalArgumentException("Minimum amount of guests is 1!");
         }
 
         if (room.getType() == RoomType.SINGLE && bookingDto.getExtraBeds() > 0) {
+            log.warn("Single room cannot have extra beds. roomId={}, extraBeds={}",
+                bookingDto.getRoomId(), bookingDto.getExtraBeds());
             throw new IllegalArgumentException("Single rooms can't have extra beds!");
         }
 
@@ -121,6 +158,8 @@ public class BookingServiceImp implements BookingService {
                 && room.getSize() == RoomSize.SMALL
                 && bookingDto.getExtraBeds() > 1) {
 
+            log.warn("Small double room exceeds extra bed limit. roomId={}, extraBeds={}",
+                bookingDto.getRoomId(), bookingDto.getExtraBeds());
             throw new IllegalArgumentException("Small double rooms can have a maximum of 1 extra beds!");
         }
 
@@ -128,10 +167,14 @@ public class BookingServiceImp implements BookingService {
                 && room.getSize() == RoomSize.LARGE
                 && bookingDto.getExtraBeds() > 2) {
 
+            log.warn("Large double room exceeds extra bed limit. roomId={}, extraBeds={}",
+                bookingDto.getRoomId(), bookingDto.getExtraBeds());
             throw new IllegalArgumentException("Large double rooms can have a maximum of 2 extra beds!");
         }
 
         if (bookingDto.getNumberOfGuests() > getMaxGuests(room)) {
+            log.warn("Too many guests for room. roomId={}, guests={}, maxGuests={}",
+                bookingDto.getRoomId(), bookingDto.getNumberOfGuests(), getMaxGuests(room));
             throw new IllegalArgumentException("Too many guests!");
         }
 
@@ -143,6 +186,8 @@ public class BookingServiceImp implements BookingService {
         );
 
         if (roomBooked) {
+            log.warn("Room is already booked for selected dates. roomId={}, checkIn={}, checkOut={}",
+                bookingDto.getRoomId(), bookingDto.getCheckInDate(), bookingDto.getCheckOutDate());
             throw new IllegalArgumentException("The room is already booked on the selected dates.");
         }
 
@@ -154,6 +199,7 @@ public class BookingServiceImp implements BookingService {
         booking.setExtraBeds(bookingDto.getExtraBeds());
 
         Booking savedBooking = bookingRepository.save(booking);
+        log.debug("Booking saved to database with ID={}", savedBooking.getId());
 
         return toBookingDto(savedBooking);
     }
