@@ -119,3 +119,26 @@ Unit tests cover the booking, room, and customer services.
 
 ## Notes
 - The three services share no code; they only communicate over REST, keeping each independently deployable and scalable.
+
+## Team Workflow
+
+### Branch strategy
+We use a simple feature-branch workflow with `main` as the only long-lived branch.
+
+- `main` is protected: no direct pushes. A pull request, at least 1 approval from another team member
+and a green CI run are required before merging.
+- All work is done on short-lived feature branches with descriptive names, e.g. `feature/booking-logging`.
+- Branches are merged into `main` only through pull requests.
+
+### From branch to production
+1. Create a feature branch from an up-to-date `main`.
+2. Push the branch and open a pull request against `main`.
+3. CI runs automatically on the PR and must be green.
+4. A team member reviews the PR and approves it.
+5. The PR is merged into `main`.
+
+### Deployed service
+URL of deploy service here
+Health check: URL of deploy service/actuator/health
+
+### Merge conflict
