@@ -39,11 +39,10 @@ jobs:
         if: github.event_name == 'push'
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/booking-service:${{ github.run_number }}
 
-
-jobs:
   deploy-staging:
     needs:
       - test_and_build
+    if: github.event_name == 'push'
     environment: staging
     runs-on: ubuntu-latest
 
