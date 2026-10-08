@@ -52,7 +52,7 @@ jobs:
 
       - name: Deploy to staging
         env:
-          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
         run: |
           railway service source connect \
             --image r94g/booking-service:${{ github.run_number }} \
