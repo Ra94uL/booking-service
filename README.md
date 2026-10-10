@@ -1,16 +1,14 @@
 # # Pensionat Kademina — Booking Microservice
 
-The **booking service** is the core/front-facing application of the Pensionat Kademina system — a small guesthouse ("pensionat") management platform. It's a server-rendered Spring Boot MVC app (Thymeleaf) that lets staff manage rooms, customers, bookings, and guest reviews, while delegating customer data and reviews to two separate microservices over REST.
-
-## Part of a microservices system
+## Part of a conflict system
 
 Pensionat Kademina is split into three independently deployable services:
 
-| Service | Repo | Responsibility | Default port |
-|---|---|---|---|
-| **Booking service** (this repo) | `pensionat-kademina-booking` | Rooms, bookings, UI, orchestrates the other two services | `8080` |
-| Customer service | [`pensionat-kademina-customer-service`](https://github.com/gabbson42/pensionat-kademina-customer-service) | Customer records (CRUD REST API) | `8081` (host) / `8080` (container) |
-| Rating service | [`pensionat-kademina-rating-service`](https://github.com/gabbson42/pensionat-kademina-rating-service) | Guest reviews/ratings, validated against real bookings | `8083` (host) / `8080` (container) |
+| Service                             | Repo | Responsibility | Default port |
+|-------------------------------------|---|---|---|
+| **Blaaaa blablablabla** (this repo) | `pensionat-kademina-booking` | Rooms, bookings, UI, orchestrates the other two services | `8080` |
+| Customer service                    | [`pensionat-kademina-customer-service`](https://github.com/gabbson42/pensionat-kademina-customer-service) | Customer records (CRUD REST API) | `8081` (host) / `8080` (container) |
+| Rating service                      | [`pensionat-kademina-rating-service`](https://github.com/gabbson42/pensionat-kademina-rating-service) | Guest reviews/ratings, validated against real bookings | `8083` (host) / `8080` (container) |
 
 The booking service is the hub: it renders the UI, owns rooms and bookings, and calls out to the customer service (to list/create/edit/delete customers) and the rating service (to list/submit reviews). It also exposes an internal API (`/api/bookings/check`) that the rating service calls to confirm a guest actually stayed in a room before letting them leave a review.
 
