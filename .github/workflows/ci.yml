@@ -57,6 +57,14 @@ jobs:
       - name: Install Railway CLI
         run: npm i -g @railway/cli
 
+      - name: Link Railway project
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+        run: |
+          railway link \
+            --project d8db2b9e-f2f8-44b2-be9a-b48daa04376c \
+            --environment staging
+
       - name: Deploy to staging
         env:
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
@@ -81,6 +89,14 @@ jobs:
       - name: Install Railway CLI
         run: npm i -g @railway/cli
 
+      - name: Link Railway project
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+        run: |
+          railway link \
+            --project d8db2b9e-f2f8-44b2-be9a-b48daa04376c \
+            --environment production
+
       - name: Deploy to production
         env:
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
@@ -95,8 +111,3 @@ jobs:
           response=$(curl -f https://booking-service-production-e569.up.railway.app/actuator/health)
           echo "$response"
           echo "$response" | grep '"status":"UP"'
-          
-          
-    
-          
-          
