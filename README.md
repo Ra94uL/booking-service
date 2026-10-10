@@ -1,4 +1,4 @@
-# Pensionat Kademina — Booking Service
+# # Pensionat Kademina — Booking Microservice
 
 The **booking service** is the core/front-facing application of the Pensionat Kademina system — a small guesthouse ("pensionat") management platform. It's a server-rendered Spring Boot MVC app (Thymeleaf) that lets staff manage rooms, customers, bookings, and guest reviews, while delegating customer data and reviews to two separate microservices over REST.
 
