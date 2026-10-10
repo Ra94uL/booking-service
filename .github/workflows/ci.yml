@@ -6,8 +6,15 @@ on:
   pull_request:
     branches: [ main ]
 
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Docker image tag to deploy to production"
+        required: true
+
 jobs:
   test_and_build:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
@@ -50,9 +57,17 @@ jobs:
       - name: Install Railway CLI
         run: npm i -g @railway/cli
 
+      - name: Link Railway project
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+        run: |
+          railway link \
+            --project d8db2b9e-f2f8-44b2-be9a-b48daa04376c \
+            --environment staging
+
       - name: Deploy to staging
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
         run: |
           railway service source connect \
             --image r94g/booking-service:${{ github.run_number }} \
@@ -61,6 +76,38 @@ jobs:
 
       - name: Verify staging health
         run: |
-          response=$(curl -s https://booking-service-staging26.up.railway.app/actuator/health)
+          response=$(curl -f https://booking-service-staging26.up.railway.app/actuator/health)
+          echo "$response"
+          echo "$response" | grep '"status":"UP"'
+
+  deploy-production:
+    if: github.event_name == 'workflow_dispatch'
+    environment: "proactive-simplicity / production"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install Railway CLI
+        run: npm i -g @railway/cli
+
+      - name: Link Railway project
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+        run: |
+          railway link \
+            --project d8db2b9e-f2f8-44b2-be9a-b48daa04376c \
+            --environment production
+
+      - name: Deploy to production
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+        run: |
+          railway service source connect \
+            --image r94g/booking-service:${{ github.event.inputs.image_tag }} \
+            --service booking-service \
+            --environment production
+
+      - name: Verify production health
+        run: |
+          response=$(curl -f https://booking-service-production-e569.up.railway.app/actuator/health)
           echo "$response"
           echo "$response" | grep '"status":"UP"'
