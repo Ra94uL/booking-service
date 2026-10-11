@@ -35,7 +35,7 @@ public class CustomerServiceHealthIndicator implements HealthIndicator {
             return Health.up().withDetail("service", "customer-service").build();
         } catch (RestClientException e) {
             log.warn("Health check: customer-service is DOWN ({})", e.getClass().getSimpleName());
-            return Health.down()
+            return Health.status("CUSTOMER_SERVICE_DOWN")
                     .withDetail("service", "customer-service")
                     .withDetail("error", e.getClass().getSimpleName())
                     .build();
