@@ -1,5 +1,5 @@
 # # Pensionat Kademina — Booking Microservice
-## 📄 [Team workflow, branch strategy, deployment, rollback and health checks](readme_team_workflow.md)
+## 📄 [Team workflow, branch strategy, deployment, rollback and health checks](README_team_workflow.md)
 ## Part of a conflict system
 
 Pensionat Kademina is split into three independently deployable services:
