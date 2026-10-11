@@ -310,13 +310,20 @@ Health check: customer-service is UP
 A `RestClientException` is thrown. For example:
 
 - the customer service cannot be reached (connection refused, timeout or wrong URL)
-- the customer service answers with an error status, such as 404 (no Actuator) or 503 (it reports itself as DOWN)
+- the customer service answers with an error status, such as 404 or 503
 
-A `WARN` line is written to the log:
+The indicator then reports the custom status `CUSTOMER_SERVICE_DOWN` and writes a `WARN` line to the log:
 
 ```text
 Health check: customer-service is DOWN (ResourceAccessException)
 ```
+
+We deliberately do not use the status `DOWN`. The customer service is a soft dependency:
+booking-service still works without it and shows an error message instead. With
+`management.endpoint.health.status.order` the custom status ranks below `UP`, so the overall
+status stays `UP` (HTTP 200) and a deployment is not blocked when the customer service is down.
+The problem is still visible under `components.customerService`.
+
 
 ### How CUSTOMER_SERVICE_URL is configured in Railway
 
@@ -354,30 +361,41 @@ When the customer service is reachable:
     "customerService": {
       "status": "UP",
       "details": { "service": "customer-service" }
-    }
+    },
+    "db": { "status": "UP" },
+    "ping": { "status": "UP" }
   }
 }
 ```
 
-When the customer service is not reachable:
+
+When the customer service is not reachable (shortened):
 
 ```json
 {
-  "status": "DOWN",
+  "status": "UP",
   "components": {
     "customerService": {
-      "status": "DOWN",
+      "status": "CUSTOMER_SERVICE_DOWN",
       "details": {
         "service": "customer-service",
-        "error": "ResourceAccessException"
+        "error": "NotFound"
       }
-    }
+    },
+    "db": { "status": "UP" }
   }
 }
 ```
-Other components, such as `db` and `diskSpace`, are listed in the same way.
-The top-level `status` summarizes all components and is `DOWN` if any of them is `DOWN`. The `components` section shows which one it is.
-The reason is also written to the booking-service log in Railway.
 
-When the status is `DOWN`, the endpoint answers with HTTP 503, so the platform can see it.
+The real response also contains more details for `diskSpace` and the components `livenessState`,
+`readinessState` and `ssl`, which are left out here.
 
+The top-level `status` summarizes the components that booking-service needs to run, such as the
+database. It is `DOWN` if any of them is `DOWN`. The custom status `CUSTOMER_SERVICE_DOWN` ranks
+below `UP`, so a customer service that is not reachable does not change the top-level status.
+The `components` section shows which component has a problem, and the reason is also written to
+the booking-service log in Railway.
+
+The endpoint answers with HTTP 200 when the top-level status is `UP`, which means that Railway
+accepts the deployment even if the customer service is down. HTTP 503 is only returned if a
+required component, such as the database, is `DOWN`.
