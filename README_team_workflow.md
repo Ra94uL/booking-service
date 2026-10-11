@@ -342,14 +342,20 @@ and is not hard-coded in the source code.
 
 ### How the indicator appears in /actuator/health
 
-The indicator is part of the overall status, so `/actuator/health` returns only the combined
-status. Details are hidden by default.
+The indicator is shown as its own component, `customerService`, because
+`management.endpoint.health.show-details=always` is set in `application.properties`.
 
 When the customer service is reachable:
 
 ```json
 {
-  "status": "UP"
+  "status": "UP",
+  "components": {
+    "customerService": {
+      "status": "UP",
+      "details": { "service": "customer-service" }
+    }
+  }
 }
 ```
 
@@ -357,12 +363,21 @@ When the customer service is not reachable:
 
 ```json
 {
-  "status": "DOWN"
+  "status": "DOWN",
+  "components": {
+    "customerService": {
+      "status": "DOWN",
+      "details": {
+        "service": "customer-service",
+        "error": "ResourceAccessException"
+      }
+    }
+  }
 }
 ```
+Other components, such as `db` and `diskSpace`, are listed in the same way.
+The top-level `status` summarizes all components and is `DOWN` if any of them is `DOWN`. The `components` section shows which one it is.
+The reason is also written to the booking-service log in Railway.
 
 When the status is `DOWN`, the endpoint answers with HTTP 503, so the platform can see it.
-The reason is written to the booking-service log in Railway.
 
-This also means that a deployment is only reported healthy when the customer service is
-reachable.
